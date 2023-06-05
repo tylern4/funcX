@@ -60,8 +60,11 @@ def test_starter_sends_sentinel_upon_error(mocker):
     q = mocker.Mock()
     mock_ix = mocker.patch(f"{mod_dot_path}.Interchange")
     mock_ix.side_effect = ArithmeticError
+
     with pytest.raises(ArithmeticError):
         starter(q)
-    q.put.assert_called()
+
+    msg = q.put.call_args[0][0]
+    assert isinstance(msg, ArithmeticError)
     q.close.assert_called()
     q.join_thread.assert_called()

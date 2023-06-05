@@ -453,17 +453,14 @@ class HighThroughputExecutor(RepresentationMixin):
             },
         )
         self.queue_proc.start()
-        msg = None
-        try:
-            msg = comm_q.get(block=True, timeout=120)
-        except queue.Empty:
-            log.error("Interchange did not complete initialization.")
+        msg = comm_q.get(block=True, timeout=120)
 
-        if not msg:
+        if isinstance(msg, Exception):
+            log.error("Interchange did not complete initialization.")
             # poor-person's attempt to not interweave the traceback log lines
             # with the subprocess' likely traceback lines
             time.sleep(0.5)
-            raise Exception("Interchange failed to start")
+            raise Exception(f"Interchange failed to start: {msg}")
 
         comm_q.close()  # not strictly necessary, but be plain about intentions
         comm_q.join_thread()

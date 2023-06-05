@@ -1180,10 +1180,10 @@ def starter(comm_q: mp.Queue, *args, **kwargs) -> None:
     try:
         ic = Interchange(*args, **kwargs)
         comm_q.put((ic.worker_task_port, ic.worker_result_port))
+    except Exception as err:
+        comm_q.put(err)
+        raise err
     finally:
-        if not ic:  # There was an exception
-            comm_q.put(None)
-
         # no sense in having the queue open past it's usefulness
         comm_q.close()
         comm_q.join_thread()
