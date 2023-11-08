@@ -75,12 +75,10 @@ class GlobusComputeEngineBase(ABC):
     def __init__(
         self,
         *args: object,
-        heartbeat_period: int = 30,
         endpoint_id: t.Optional[uuid.UUID] = None,
         **kwargs: object,
     ):
         self._shutdown_event = threading.Event()
-        self._heartbeat_period = heartbeat_period
         self.endpoint_id = endpoint_id
 
         # remove these unused vars that we are adding to just keep

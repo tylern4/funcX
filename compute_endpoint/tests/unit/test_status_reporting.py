@@ -5,6 +5,7 @@ import pytest
 from globus_compute_common import messagepack
 from globus_compute_common.messagepack.message_types import EPStatusReport
 from globus_compute_endpoint import engines
+from globus_compute_endpoint.engines.base import GlobusComputeEngineBase
 from pytest_mock import MockFixture
 
 logger = logging.getLogger(__name__)
@@ -15,14 +16,13 @@ logger = logging.getLogger(__name__)
     (engines.ProcessPoolEngine, engines.ThreadPoolEngine, engines.GlobusComputeEngine),
 )
 def test_status_reporting(engine_type, engine_runner, engine_heartbeat: int):
-    engine = engine_runner(engine_type)
+    engine: GlobusComputeEngineBase = engine_runner(engine_type)
+    engine._status_report_thread.reporting_period = 0.1
 
     report = engine.get_status_report()
     assert isinstance(report, EPStatusReport)
 
     results_q = engine.results_passthrough
-
-    assert engine._status_report_thread.reporting_period == engine_heartbeat
 
     # Flush queue to start
     while not results_q.empty():
@@ -74,6 +74,7 @@ def test_gcengine_status_report(mocker: MockFixture, engine_runner: callable):
     status_report = engine.get_status_report()
     info = status_report.global_state["info"]
 
+    assert engine._status_report_thread.reporting_period == 30
     assert info["managers"] == 3
     assert info["active_managers"] == 2
     assert info["total_workers"] == 36
@@ -88,4 +89,4 @@ def test_gcengine_status_report(mocker: MockFixture, engine_runner: callable):
     assert info["min_blocks"] == engine.executor.provider.min_blocks
     assert info["max_workers_per_node"] == engine.executor.max_workers
     assert info["nodes_per_block"] == engine.executor.provider.nodes_per_block
-    assert info["heartbeat_period"] == engine._heartbeat_period
+    assert info["heartbeat_period"] == engine.executor.heartbeat_period
