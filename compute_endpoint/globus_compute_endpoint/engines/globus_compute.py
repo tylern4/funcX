@@ -19,6 +19,7 @@ from parsl.executors.high_throughput.executor import HighThroughputExecutor
 logger = logging.getLogger(__name__)
 DOCKER_CMD_TEMPLATE = "docker run {options} -v {rundir}:{rundir} -t {image} {command}"
 APPTAINER_CMD_TEMPLATE = "apptainer run {options} {image} {command}"
+SINGULARITY_CMD_TEMPLATE = "singularity run {options} {image} {command}"
 
 
 class GlobusComputeEngine(GlobusComputeEngineBase):
@@ -31,6 +32,7 @@ class GlobusComputeEngine(GlobusComputeEngineBase):
         executor: t.Optional[HighThroughputExecutor] = None,
         docker_container_uri: t.Optional[str] = None,
         apptainer_container_uri: t.Optional[str] = None,
+        singularity_container_uri: t.Optional[str] = None,
         container_cmd_options: t.Optional[str] = None,
         **kwargs,
     ):
@@ -44,6 +46,7 @@ class GlobusComputeEngine(GlobusComputeEngineBase):
         self.max_workers_per_node = 1
         self.docker_container_uri = docker_container_uri
         self.apptainer_container_uri = apptainer_container_uri
+        self.singularity_container_uri = singularity_container_uri
         self.container_cmd_options = container_cmd_options
         if executor is None:
             executor = HighThroughputExecutor(  # type: ignore
@@ -72,6 +75,12 @@ class GlobusComputeEngine(GlobusComputeEngineBase):
         elif self.apptainer_container_uri:
             launch_cmd = APPTAINER_CMD_TEMPLATE.format(
                 image=self.apptainer_container_uri,
+                command=launch_cmd,
+                options=self.container_cmd_options or "",
+            )
+        elif self.singularity_container_uri:
+            launch_cmd = SINGULARITY_CMD_TEMPLATE.format(
+                image=self.singularity_container_uri,
                 command=launch_cmd,
                 options=self.container_cmd_options or "",
             )
